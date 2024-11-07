@@ -1260,6 +1260,12 @@ INPUT ./preface.tex
 INPUT preface.tex
 INPUT ./preface.tex
 INPUT preface.tex
+INPUT /usr/share/texlive/texmf-dist/tex/latex/lm/ts1lmr.fd
+INPUT /usr/share/texlive/texmf-dist/tex/latex/lm/ts1lmr.fd
+INPUT /usr/share/texlive/texmf-dist/tex/latex/lm/ts1lmr.fd
+INPUT /usr/share/texlive/texmf-dist/tex/latex/lm/ts1lmr.fd
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ts1-lmr12.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc
 INPUT ./chap01.tex
 INPUT ./chap01.tex
 INPUT ./chap01.tex

@@ -1,3 +1,24 @@
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
+Fluid-structure interactions (FSI) describe situations in which a movable or deformable object interacts with surrounding or internal fluid flow. 
+It can have a stable or oscillatory nature, depending on the problem. FSI problems can be found in engineering e.g. aircraft, automobile, spacecraft, or engine design,
+and civil engineering e.g. when designing bridges or huge marine structures. FSI problems also arise in biomechanics when modelling blood flow or when studying heart
+valve dynamics.
+
+These problems are most of the time too complex to be solved analytically and it is often impossible to conduct relevant experiments. 
+If that is the case we need to analyse these problems utilising numerical simulation. Two main approaches for FSI are being used:
+\begin{itemize}
+    \item Partitioned approach: the governing equations for fluid and solid are solved separately, with two distinct solvers, and coupling is achieved subsequently.
+    \item Monolithic approach: the governing equations for both fluid and solid are solved simultaneously, with a single solver.
+\end{itemize} 
+The partitioned approach often allows us to use existing software which might be advantageous. However, the stability of the coupling algorithm might be an issue. 
+Moreover working with a mesh that changes over time is often cumbersome and hard to implement if the geometry of the problem is complex.
+
+We turn our attention to a monolithic approach; specifically the Smoothed Particle Hydrodynamics (SPH) method that was developed in [1] by discretizing the unified formulation of continuum mechanics [2,3].
+The governing equations belong to the class of Symmetric Hyperbolic Thermodynamically compatible (SHTC) equations where we substitute the concept of viscosity coefficient by the so-called
+particle rearrangement time. The continuum is interpreted as a system of particles connected by bonds and flow is interpreted as bond destruction and rearrangement of particles. 
+This is the key idea for a unified description of fluids and solids because (elastic) solids can be interpreted as fluids with infinite relaxation time.
+
+The aim of this paper is to expand on results achieved in paper [1] and test the method for FSI problems. First, we review article [1], the SPH method and we derive the governing equations
+from hamiltonian mechanics of continuum. We then proceed to numerical testing namely we test the method for viscoplastic flows. Finally, we put the method in test on the Turek-Hron FSI benchmark.
 
