@@ -1,5 +1,112 @@
 \chapter{Title of the second chapter}
 
-\section{Title of the first subchapter of the second chapter}
+\section{SPH}
+Smoothed-Particle Hydrodynamics (SPH) is a lagrangian method that works by dividing the continuum into N particles. 
+Each particle $a$ has its position $\xx_a$, velocity $\vv_a$, mass $m_a$, density $\rho_a$ etc. Given the lagrangian
+structure of SPH it follows that $\dot{\xx}_a = \vv_a$.
+Particles interact with each other via the $ smoothing$ $kernel$ function $W_h : \R^d \goto [0, \infty)$. Parameter $h > 0$ is called
+$smoothing$ $length$. Kernel function has the following properties:
+\begin{itemize}
+    \item $W_h \in C^2(\R^d)$
+    \item $\int_{\R^d} W_h(\xx) \,d\xx = 1$
+    \item $W_h = W_h(|\xx|)$
+    \item $h: W_h(r) = \frac{1}{h^d}W_1(r/h)$
+    \item $\frac{dW_h}{dr} \leq 0$
+\end{itemize}
+In this thesis, we will be using Wendland's quintic kernel, which is defined as follows:
+\begin{equation}
+    W_h(r) =
+    \begin{cases}
+        \frac{\alpha_d}{h^d} (1 - \frac{r}{2h})^4(1 + \frac{4r}{h})
+        & 0 \leq r \leq 2h,\\
+        0
+        & 2h < r.
+    \end{cases} 
+\end{equation}
+The constant 
+\begin{equation}
+    \alpha_d =
+    \begin{cases}
+        \frac{7}{4}\pi &d = 2,\\
+        \frac{21}{16}\pi &d = 3
+    \end{cases}
+\end{equation}
+is choosen such that the normalization constraint $\int_{\R^d} W_h(\xx) \,d\xx = 1$ is satisfied.
+Functions and partial derivatives are aproximated via the smoothing kernel in two steps. 
 
-\section{Title of the second subchapter of the second chapter}
+Firstly we aproximate $f$ 
+respectively ${\pd}_x f$ using convolution:
+\begin{equation}
+    \begin{aligned}
+            f = f * \delta &\approx f * W_h, \\
+            {\pd}_x f = {\pd}_x f * \delta &\approx {\pd}_x f * W_h = f * {\pd}_x W_h.    
+    \end{aligned}
+\end{equation}
+
+Secondly, we aproximate the integral by discreticazing it and summing over all particles in the system:
+\begin{equation}
+    \begin{aligned}
+            (f * W_h)({\xx}_a) = \int f(\mathbf{y}) W_h({\xx}_{a} - \mathbf{y}) d\mathbf{y} \approx \sum_{b}  V_b f_b W_{h, ab}, \\
+            (f * {\pd}_{x_i} W_h)({\xx}_a) = \int f(\mathbf{y}) {\pd}_{x_i} W_h({\xx}_a - \mathbf{y}) d\mathbf{y} \approx \sum_{b}  V_b f_b {\pd}_{x_i} W_{h, ab}
+    \label{eq:aproxsph}           
+    \end{aligned}
+\end{equation}
+Where $V_b = \rho_b / m_b$ is the volume of the b-th particle, $f_b = f({\xx}_b)$ and $W_{h, ab} = W_h({\xx}_a - {\xx}_b)$.
+If there is no room for disambiguation, we will ommit index $h$ and simply write $W_{ab} = W_{h, ab}$. We will use the notation $W'_{ab} = \frac{dW}{dr}(r_{ab})$
+and $\nabla W_{ab} = W'_{ab} \frac{{\xx}_{ab}}{r_{ab}}$ where $r_{ab} = |{\xx}_a - {\xx}_b| = |{\xx}_{ab}|$.
+
+
+\subsection{Discrete density}
+The density $\rho_a$ of particle $a$ can be expressed as: 
+\begin{equation}
+    \rho_a = \rho({\xx}_a) = \sum_{b} m_b W_{ab}.
+\end{equation}
+It follows that the total differential of $\rho_a$ with respect to the position of the particles $\xx$ is equal to:
+\begin{equation}
+    d\rho_a = \sum_{b} m_b dW_{ab} = \sum_{b} m_b \sum_{b} \frac{dW_{ab}}{dr} = \sum_{b} \nabla W_{ab} \cdot d{\xx}_{ab}.
+\end{equation} 
+assuming $r_{ab} > 0$ for each pair of particles $a$ and $b$ and using the fact that for vector $\xx = (x_1,...,x_d)^T$ we have:
+\begin{equation}
+    dW = \sum_{i=1}^{d} \frac{dW}{dr} \frac{dr}{dx_i} dx_i =  W' \frac{\xx}{r} \cdot d\xx = \nabla W \cdot d\xx
+\end{equation}
+
+\subsection{Discrete divergence and gradient}
+%We can aproximate divergence $\nabla \cdot \vv$ of vector $\vv = (v_1,..., v_d)^T$ and using ~\Ref{eq:aproxsph} as follows
+%\begin{equation}
+%    \nabla \cdot \vv = \sum_{i=1}^d \frac{dv_i}{dx_i} = \sum_{i=1}^{d} \sum_{b}  V_b f_b {\pd}_{x_i} W_{h, ab}
+%\end{equation}
+Assuming all particles have constant mass and differentiating the discrete density $\rho_a$ with respect to time yields
+\begin{equation}
+    \frac{d\rho_a}{dt} = \sum_b m_b \frac{dW_{ab}}{dt} = \sum_b m_b \nabla W_{ab} \cdot \frac{d{\xx}_{ab}}{dt} = \sum_b m_b {\vv}_{ab} \cdot \nabla W_{ab}
+\end{equation}
+Comparing the result with continuity equation in the Lagrangian setting 
+\begin{equation}
+    \frac{d\rho}{dt} = - \rho \nabla \cdot \vv
+\end{equation}
+motivates us to define the \emph{discrete divergence} operator as follows
+\begin{equation}
+    (\nabla \cdot \vv)_a = - \frac{1}{\rho_a}\sum_b m_b {\vv}_{ab} \cdot \nabla W_{ab}.
+\label{eq:sphdiv}
+\end{equation}
+Similarly for gradient $\nabla {\vv}$ we have
+\begin{equation}
+    (\nabla {\vv}_a) = - \frac{1}{\rho_a}\sum_b m_b {\vv}_{ab} \otimes \nabla W_{ab}.
+\label{eq:sphgrad}
+\end{equation}
+
+\subsection{Discrete velocity gradient}
+The velocity gradient $\LL$ satisfies the following equation
+\begin{equation}
+    \dot{\FF} = \LL \FF
+\end{equation}
+where $\dot{\FF} = \pd \FF + \vv \cdot \nabla \FF$ is the material derivative of $\FF$ and $\FF = \frac{\pd \xx}{\pd \XX}$ is the deformation gradient.
+Using \Ref{eq:sphgrad} we can aproximate $\LL$ as follows
+\begin{equation}
+    {\LL}_a = \left(\sum_{b}m_b{\vv}_{ab}\otimes \nabla W_{ab}\right) \left(\sum_{b}m_b{\xx}_{ab}\otimes \nabla W_{ab}\right)^{-1}
+\end{equation}
+\section{Governing equations}
+The unified model of continuum for both fluid and solid dynamics reads as follows [cite]:
+\begin{subequations}
+    
+\end{subequations}
+

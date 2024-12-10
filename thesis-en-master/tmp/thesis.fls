@@ -1277,6 +1277,8 @@ INPUT chap01.tex
 INPUT ./chap01.tex
 INPUT chap01.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmr17.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc
+INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc
 INPUT ./chap02.tex
 INPUT ./chap02.tex
 INPUT ./chap02.tex
@@ -1287,6 +1289,11 @@ INPUT ./chap02.tex
 INPUT chap02.tex
 INPUT ./chap02.tex
 INPUT chap02.tex
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmr12.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmbx12.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc
+INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmri12.tfm
 INPUT ./epilog.tex
 INPUT ./epilog.tex
 INPUT ./epilog.tex
@@ -1308,7 +1315,6 @@ INPUT bibliography.tex
 INPUT ./bibliography.tex
 INPUT bibliography.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmcsc10.tfm
-INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmri12.tfm
 INPUT tmp/thesis.lof
 INPUT tmp/thesis.lof
 INPUT tmp/thesis.lof
@@ -1341,7 +1347,16 @@ INPUT tmp/thesis.out
 INPUT tmp/thesis.run.xml
 OUTPUT tmp/thesis.run.xml
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmbx12.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmbx8.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmex10.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmmi12.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmmi6.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmmi8.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmr12.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmr17.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmr8.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmri12.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmsy10.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmsy8.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb
