@@ -1,7 +1,0 @@
-import Pkg; Pkg.add("SmoothedParticles")
-import Pkg; Pkg.add("Parameters")
-import Pkg; Pkg.add("Plots")
-import Pkg; Pkg.add("CSV")
-import Pkg; Pkg.add("DataFrames")
-include("rod.jl")
-rod.main()
