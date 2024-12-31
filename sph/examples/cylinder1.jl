@@ -21,8 +21,9 @@ using Printf
 using SmoothedParticles
 include("rod.jl")
 using .rod
+using Parameters
 
-const folder_name = "results/cylinder1"
+const folder_name = "results/cylinder2"
 
 #=
 Declare constants
@@ -38,9 +39,11 @@ const cyl2 = dr*round(0.2/dr)  #y coordinate of the cylinder
 const cyl_r = 0.05           #radius of the cylinder
 const wall_w = 2.5*dr        #width of the wall
 const inflow_l = 3.0*dr      #width of inflow layer
+const vol = dr*dr            #particle volume
 #rod parameters
 const L = 0.15
 const W = 0.01
+
 
 
 #physical parameters
@@ -55,20 +58,64 @@ const P0 = 1.2          #anti-clump term
 #temporal parameters
 const dt = 0.2*h/c      #time step
 const dt_frame = 0.02    #how often data is saved
-const t_end = 10.0#5.0      #end of simulation
-const t_acc = 5.0#0.5      #time to accelerate to full speed
+const t_end = 5.0      #end of simulation
+const t_acc = 0.5      #time to accelerate to full speed
 
 #particle types
 const FLUID = 0.
 const WALL = 1.
 const INFLOW = 2.
 const OBSTACLE = 3.
+const ROD = 4.
+
+#ALGEBRAIC TOOLS
+#----------------------------------------
+
+@inbounds function outer(x::RealVector, y::RealVector)::RealMatrix
+    return RealMatrix(
+        x[1]*y[1], x[2]*y[1], 0., 
+        x[1]*y[2], x[2]*y[2], 0.,
+        0., 0., 0.
+    )
+end
+
+@inbounds function det(A::RealMatrix)::Float64
+    return A[1,1]*A[2,2] - A[1,2]*A[2,1]
+end
+
+@inbounds function inv(A::RealMatrix)::RealMatrix
+    idet = 1.0/det(A)
+    return RealMatrix(
+        +idet*A[2,2], -idet*A[2,1], 0., 
+        -idet*A[1,2], +idet*A[1,1], 0.,
+        0., 0., 0.
+    )
+end
+
+@inbounds function trans(A::RealMatrix)::RealMatrix
+    return RealMatrix(
+        A[1,1], A[1,2], 0., 
+        A[2,1], A[2,2], 0.,
+        0.,  0., 0.
+    )
+end
+
+@inbounds function dev(G::RealMatrix)::RealMatrix
+    λ = 1/3*(G[1,1] + G[2,2] + 1.0)
+    return RealMatrix(
+        G[1,1] - λ,G[2,1], 0.0,
+        G[1,2], G[2,2] - λ, 0.0,
+        0.0, 0.0, 1.0 - λ
+    )
+end
+
+
 
 #=
 Declare variables to be stored in a Particle
 =#
 
-mutable struct Particle <: AbstractParticle
+@with_kw mutable struct Particle <: AbstractParticle
     x::RealVector #position
     v::RealVector #velocity
     a::RealVector #acceleration
@@ -76,6 +123,12 @@ mutable struct Particle <: AbstractParticle
     Drho::Float64 #rate of density
     P::Float64 #pressure
     type::Float64 #particle type
+    # rod parameters
+    X::RealVector = x     #Lag. position
+    A::RealMatrix = MAT0  #distortion
+    H::RealMatrix = MAT0  #correction matrix
+    B::RealMatrix = MAT0  #derivative of energy wrt A
+    e::Float64 = 0.       #fronorm squared of eta
     Particle(x,type) = begin
         return new(x, VEC0, VEC0, rho0, 0., 0., type)
     end
@@ -128,28 +181,28 @@ function find_pressure!(p::Particle)
 end
 
 @inbounds function internal_force!(p::Particle, q::Particle, r::Float64)
-	ker = m*rDwendland2(h,r)
+    # rod
+    if p.type == ROD
+        ker = m*wendland2(h,r)
+        rDker = m*rDwendland2(h,r)
+        x_pq = p.x - q.x
+        X_pq = p.X - q.X
+        #force
+        p.a += -ker*(trans(p.A)*(p.B*x_pq))
+        p.a += -ker*(trans(q.A)*(q.B*x_pq))
+        #"eta" correction (remove this -> energy will not be conserved!)
+        k_pq = +trans(p.B)*(X_pq - p.A*x_pq)
+        k_qp = -trans(q.B)*(X_pq - q.A*x_pq)
+        p.a += rDker*dot(x_pq, k_pq)*x_pq + ker*k_pq
+        p.a -= rDker*dot(x_pq, k_qp)*x_pq + ker*k_qp
+        #artificial_viscosity
+        p.a += 2*m*vol*rDker*nu*(p.v - q.v)        
+    end
+    ker = m*rDwendland2(h,r)
 	p.a += -ker*(p.P/p.rho^2 + q.P/q.rho^2)*(p.x - q.x)
 	p.a += +2*ker*mu/rho0^2*(p.v - q.v)
     ker = m*rDwendland2(h/2,r)
     p.a += -2*ker*P0/rho0^2*(p.x - q.x)
-    # # rod
-    # if p.type == ROD
-    #     ker = wendland2(h,r)
-    #     rDker = rDwendland2(h,r)
-    #     x_pq = p.x - q.x
-    #     X_pq = p.X - q.X
-    #     #force
-    #     p.f += -ker*(trans(p.A)*(p.B*x_pq))
-    #     p.f += -ker*(trans(q.A)*(q.B*x_pq))
-    #     #"eta" correction (remove this -> energy will not be conserved!)
-    #     k_pq = +trans(p.B)*(X_pq - p.A*x_pq)
-    #     k_qp = -trans(q.B)*(X_pq - q.A*x_pq)
-    #     p.f += rDker*dot(x_pq, k_pq)*x_pq + ker*k_pq
-    #     p.f -= rDker*dot(x_pq, k_qp)*x_pq + ker*k_qp
-    #     #artificial_viscosity
-    #     p.f += 2*m*vol*rDker*nu*(p.v - q.v)
-    # end
 end
 
 function move!(p::Particle)
@@ -157,15 +210,15 @@ function move!(p::Particle)
 	if p.type == FLUID || p.type == INFLOW
 		p.x += dt*p.v
 	end
-    # # rod
-    # if p.type == ROD
-    #     p.x += dt*p.v
-    #     #reset vars
-    #     p.H = MAT0
-    #     p.A = MAT0
-    #     p.a = VEC0*m
-    #     p.e = 0
-    # end
+    # rod
+    if p.type == ROD
+        p.x += dt*p.v
+        #reset vars
+        p.H = MAT0
+        p.A = MAT0
+        p.a = VEC0*m
+        p.e = 0        
+    end
 end
 
 function accelerate!(p::Particle)
@@ -173,12 +226,12 @@ function accelerate!(p::Particle)
 		p.v += 0.5*dt*p.a
 	end
     # rod
-    # if p.type == ROD
-    #     p.v += 0.5*dt*p.a
-    #     if p.X[1] < h
-    #         p.v = VEC0
-    #     end
-    # end
+    if p.type == ROD
+        p.v += 0.5*dt*p.a
+        if p.X[1] < h
+            p.v = VEC0
+        end
+    end
 end
 
 function add_new_particles!(sys::ParticleSystem)
