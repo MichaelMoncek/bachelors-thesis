@@ -1,13 +1,13 @@
 module tail
 
 using SmoothedParticles
-
+using ..constants
 #=
 Declare constants
 =#
 
 const pull_force = 1.5 #pulling force [N]
-const pull_time = 3.0  #for how long we pull
+#const pull_time = 3.0  #for how long we pull
 
 const c_l = 20.0   #longitudinal sound speed
 const c_s = 200.0  #shear sound speed
@@ -95,10 +95,10 @@ function find_a!(p::AbstractParticle, q::AbstractParticle, r::Float64)
     p.a += 2*m*vol*rDker*nu*(p.v - q.v)
 end
 
-function pull!(p::AbstractParticle, L)
+function pull!(p::AbstractParticle)
     if p.X[1] > L-h
         p.a += m*RealVector(0., (vol*pull_force)/(h*W), 0.)
     end
 end
-
+    
 end

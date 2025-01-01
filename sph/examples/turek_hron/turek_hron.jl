@@ -7,6 +7,7 @@ download file from cluster:
 module turek_hron
 
 using SmoothedParticles
+using ..constants
 include("tail.jl")
 
 const folder_name = "results/turek_hron"
@@ -16,8 +17,8 @@ Declare constants
 =#
 
 #geometry parameters
-const dr = 3.9e-3 		     #average particle distance (decrease to make finer simulation)
-const h = 2.5*dr		     #size of kernel support
+# const dr = 3.9e-3 		     #average particle distance (decrease to make finer simulation)
+# const h = 2.5*dr		     #size of kernel support
 const chan_l = 0.8 #2.2      #length of the channel
 const chan_w = 0.41          #width of the channel
 const cyl1 = dr*round(0.2/dr)  #x coordinate of the cylinder
@@ -27,13 +28,14 @@ const wall_w = 2.5*dr        #width of the wall
 const inflow_l = 3.0*dr      #width of inflow layer
 
 #tail parameters
-const L = 0.25
-const W = 0.01
+# const L = 0.25
+# const W = 0.01
+# const pull_time = 0.5
 
-#physical parameters
-const rho0 = 1.0
-const vol = dr*dr            #particle volume
-const m = rho0*vol           #particle mass
+# #physical parameters
+# const rho0 = 1.0
+# const vol = dr*dr            #particle volume
+# const m = rho0*vol           #particle mass
 
 
 #temporal parameters
@@ -97,28 +99,36 @@ Physics
 =#
 
 function update_v!(p::Particle)
+    #if p.type == TAIL       
+    # Is it possible to specify particle type in system?
+    # That would greatly simplified the code.
     p.v += 0.5*p.a*dt
     # dirichlet BC - fixes the base of the tail
     if p.X[1] < h + cyl1 + cyl_r
         p.v = VEC0
-    end    
+    end
+    #end    
 end
 
-function update_x!(p::Particle)
+function update_x!(p::Particle)    
+    #if p.type == TAIL
     p.x += p.v*dt
-    if p.type == TAIL
-        #reset vars
-        p.H = MAT0
-        p.A = MAT0
-        p.f = VEC0
-        p.e = 0.
-    end
+    # #reset vars
+    # p.H = MAT0
+    # p.A = MAT0
+    # p.a = VEC0
+    # p.e = 0.
+    # #end
 end
 
-function find_a!(p::Particle)
-    if p.type == TAIL
-        tail.pull!(p, L)
-    end
+function find_a!(sys::ParticleSystem, t::Float64)
+    apply!(sys, tail.find_A!)
+    apply!(sys, tail.find_B!)
+    apply!(sys, tail.find_a!)
+    if t < pull_time
+        apply!(sys, tail.pull!)
+    end        
+    
 end
 
 
@@ -136,11 +146,25 @@ function main()
     #Verlet scheme
     for k = 0 : Int64(round(t_end/dt))
         t = k * dt
-        # update v
-        # update x
-        # calculate a
-        # update v
-        save_frame!(out, sys, :type)
+
+        # I would like to select only particles of certain type
+        # It might not be a bad idea to modify the apply! function
+        # to take in particle type parameter      
+        
+        for p in sys.particles
+            if p.type == TAIL
+                # calculate v
+                apply!(sys, update_v!)
+                # calculate x
+                apply!(sys, update_x!)
+                create_cell_list!(sys)
+                # find a
+                find_a!(sys, t)
+                # calculate v
+                apply!(sys, update_v!)
+                save_frame!(out, sys, :type)
+            end
+        end
     end    
     save_pvd_file(out)
     println("i did something")
