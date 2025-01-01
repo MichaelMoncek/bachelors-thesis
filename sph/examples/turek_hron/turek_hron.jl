@@ -7,7 +7,7 @@ download file from cluster:
 module turek_hron
 
 using SmoothedParticles
-using tail
+include("tail.jl")
 
 const folder_name = "results/turek_hron"
 
@@ -25,7 +25,6 @@ const cyl2 = dr*round(0.2/dr)  #y coordinate of the cylinder
 const cyl_r = 0.05           #radius of the cylinder
 const wall_w = 2.5*dr        #width of the wall
 const inflow_l = 3.0*dr      #width of inflow layer
-const vol = dr*dr            #particle volume
 
 #tail parameters
 const L = 0.25
@@ -33,7 +32,13 @@ const W = 0.01
 
 #physical parameters
 const rho0 = 1.0
+const vol = dr*dr            #particle volume
+const m = rho0*vol           #particle mass
+
+
 #temporal parameters
+const dt = 0.1
+const t_end = 1.0
 
 #particle types
 const FLUID = 0.
@@ -65,6 +70,10 @@ mutable struct Particle <: AbstractParticle
     end
 end
 
+#=
+Geometry
+=#
+
 function make_system()
     domain = Rectangle(-inflow_l, -10*wall_w, chan_l, chan_w + 10*wall_w)
     sys = ParticleSystem(Particle, domain, h)
@@ -84,9 +93,39 @@ function make_system()
 end
 
 #=
+Physics
+=#
+
+function update_v!(p::Particle)
+    p.v += 0.5*p.a*dt
+    # dirichlet BC - fixes the base of the tail
+    if p.X[1] < h + cyl1 + cyl_r
+        p.v = VEC0
+    end    
+end
+
+function update_x!(p::Particle)
+    p.x += p.v*dt
+    if p.type == TAIL
+        #reset vars
+        p.H = MAT0
+        p.A = MAT0
+        p.f = VEC0
+        p.e = 0.
+    end
+end
+
+function find_a!(p::Particle)
+    if p.type == TAIL
+        tail.pull!(p, L)
+    end
+end
+
+
+#=
 # Modified Verlet scheme
     1. Calculate v(t+0.5*Δt) = v(t) + 0.5*a(t)*Δt
-    2. Calculate x(t+0.5*Δt) = x(t) + 0.5*v(t+0.5*Δt)*Δt
+    2. Calculate x(t+0.5*Δt) = x(t) + v(t+0.5*Δt)*Δt
     3. Derive a(t+Δt) from the interaction potential using x(t+Δt)
     4. v(t+Δt) = 0.5*v(t+0.5*Δt) + 0.5*a(t+Δt)*Δt
 =#
@@ -95,11 +134,14 @@ function main()
     sys = make_system()
     out = new_pvd_file(folder_name)
     #Verlet scheme
-    # update v
-    # update x
-    # calculate a
-    # update v
-    save_frame!(out, sys, :type)
+    for k = 0 : Int64(round(t_end/dt))
+        t = k * dt
+        # update v
+        # update x
+        # calculate a
+        # update v
+        save_frame!(out, sys, :type)
+    end    
     save_pvd_file(out)
     println("i did something")
 end
