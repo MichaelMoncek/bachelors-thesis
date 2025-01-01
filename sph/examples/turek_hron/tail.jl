@@ -6,13 +6,12 @@ using ..constants
 Declare constants
 =#
 
-const pull_force = 1.5 #pulling force [N]
+const pull_force = 0. #pulling force [N]
 #const pull_time = 3.0  #for how long we pull
 
 const c_l = 20.0   #longitudinal sound speed
 const c_s = 200.0  #shear sound speed
 const c_0 = sqrt(c_l^2 + 4/3*c_s^2)  #total sound speed
-const rho0 = 1.0   #density
 const nu = 1.0e-4    #artificial viscosity (surpresses noise but is not neccessary)
 
 #= 
@@ -79,8 +78,8 @@ function find_B!(p::AbstractParticle)
 end
 
 function find_a!(p::AbstractParticle, q::AbstractParticle, r::Float64)
-    ker = m*wendland2(h,r)
-    rDker = m*rDwendland2(h,r)
+    ker = wendland2(h,r)/m
+    rDker = rDwendland2(h,r)/m
     x_pq = p.x - q.x
     X_pq = p.X - q.X
     #acceleration
@@ -97,7 +96,7 @@ end
 
 function pull!(p::AbstractParticle)
     if p.X[1] > L-h
-        p.a += m*RealVector(0., (vol*pull_force)/(h*W), 0.)
+        p.a += RealVector(0., (vol*pull_force)/(h*W), 0.)/m
     end
 end
     

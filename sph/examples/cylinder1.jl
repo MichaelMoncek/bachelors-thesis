@@ -129,9 +129,7 @@ Declare variables to be stored in a Particle
     H::RealMatrix = MAT0  #correction matrix
     B::RealMatrix = MAT0  #derivative of energy wrt A
     e::Float64 = 0.       #fronorm squared of eta
-    Particle(x,type) = begin
-        return new(x, VEC0, VEC0, rho0, 0., 0., type)
-    end
+    
 end
 
 function make_system()

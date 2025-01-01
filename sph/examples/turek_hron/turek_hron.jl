@@ -39,8 +39,8 @@ const inflow_l = 3.0*dr      #width of inflow layer
 
 
 #temporal parameters
-const dt = 0.1
-const t_end = 1.0
+const dt = 0.05
+const t_end = 5.0
 
 #particle types
 const FLUID = 0.
@@ -113,11 +113,11 @@ end
 function update_x!(p::Particle)    
     #if p.type == TAIL
     p.x += p.v*dt
-    # #reset vars
-    # p.H = MAT0
-    # p.A = MAT0
-    # p.a = VEC0
-    # p.e = 0.
+    #reset vars
+    p.H = MAT0
+    p.A = MAT0
+    p.a = VEC0
+    p.e = 0.
     # #end
 end
 
@@ -142,6 +142,17 @@ end
 
 function main()
     sys = make_system()
+    domain = Rectangle(-inflow_l, -10*wall_w, chan_l, chan_w + 10*wall_w)
+    sysTail = ParticleSystem(Particle, domain, h)
+
+    for p in sys.particles        
+        if p.type == TAIL
+            push!(sysTail.particles, p)
+        end
+    end
+
+    # sysTail.particles = filter(p -> p.type == TAIL, sys.particles)
+    
     out = new_pvd_file(folder_name)
     #Verlet scheme
     for k = 0 : Int64(round(t_end/dt))
@@ -149,22 +160,28 @@ function main()
 
         # I would like to select only particles of certain type
         # It might not be a bad idea to modify the apply! function
-        # to take in particle type parameter      
+        # to take in particle type parameter 
+        # Solutions:
+            # update the package
+            # localy update the package (dubious)
+            # make a new system with particles of only type T that points to the original system and update that
+            # make udpate functions filter the particles (dubious)
+             
         
-        for p in sys.particles
-            if p.type == TAIL
-                # calculate v
-                apply!(sys, update_v!)
-                # calculate x
-                apply!(sys, update_x!)
-                create_cell_list!(sys)
-                # find a
-                find_a!(sys, t)
-                # calculate v
-                apply!(sys, update_v!)
-                save_frame!(out, sys, :type)
-            end
-        end
+        
+        # calculate v
+        apply!(sysTail, update_v!)
+        # calculate x
+        apply!(sysTail, update_x!)
+        create_cell_list!(sysTail)
+        #create_cell_list!(sysTail)
+        # find a
+        find_a!(sysTail, t)
+        # calculate v
+        apply!(sysTail, update_v!)
+        save_frame!(out, sys, :type)
+        # app
+        # println()                        
     end    
     save_pvd_file(out)
     println("i did something")

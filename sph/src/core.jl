@@ -148,7 +148,7 @@ Calls either [`apply_unary!`](@ref) or [`apply_binary!`](@ref) according to the
 signature of `action!`. If `self == true`, then particle self-interaction
 for binary operator is allowed.
 """
-function apply!(sys::ParticleSystem, action!::Function; self::Bool = false, parameters...)
+function apply!(sys::ParticleSystem, action!::Function, self::Bool = false, parameters...)	
 	Type = get_particle_type(sys)
 	if hasmethod(action!, (Type, Type, Float64))
 		apply_binary!(sys, ((p,q,r) -> action!(p, q, r; parameters...)))
@@ -159,6 +159,7 @@ function apply!(sys::ParticleSystem, action!::Function; self::Bool = false, para
 		apply_unary!(sys, (p -> action!(p; parameters...)))
 	end
 end
+
 
 
 """
